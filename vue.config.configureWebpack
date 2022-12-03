@@ -1,0 +1,222 @@
+// vue.config.js
+// webpack 使用 configureWebpack 官方文档 方式
+
+// 粉笔 终端字符串样式
+const chalk = require('chalk')
+// 进度条
+const ProgressBarPlugin = require('progress-bar-webpack-plugin')
+// 构建速度
+const SpeedMeasurePlugin = require('speed-measure-webpack-plugin')
+// 生成一个 HTML5 文件
+const HtmlWebpackPlugin = require('html-webpack-plugin')
+// 使用 terser 来压缩 JavaScript
+const TerserPlugin = require('terser-webpack-plugin')
+// css 提取分离
+const MiniCssExtractPlugin = require('mini-css-extract-plugin')
+// css 压缩
+const CssMinimizerPlugin = require('css-minimizer-webpack-plugin')
+// gzip 压缩
+const CompressionPlugin = require('compression-webpack-plugin')
+// 打包体积分析 高版本自带打包体积分析无需安装 webpack-bundle-analyzer，只需运行 yarn run build -- --report
+
+const path = require('path')
+function resolve (dir) {
+  return path.join(__dirname, dir)
+}
+
+const isProd = ['production', 'prod'].includes(process.env.NODE_ENV) // 生产环境
+// const isDev = ['devlopment', 'dev'].includes(process.env.NODE_ENV) // 生产环境
+
+// 定义要忽略的打包插件和要引入的CDN
+const assetsCDN = {
+  externals: {
+    vue: 'Vue',
+    'vue-router': 'VueRouter',
+    vuex: 'Vuex',
+    axios: 'axios'
+  },
+  css: [
+
+  ],
+  js: [
+    'https://cdn.staticfile.org/axios/1.1.2/axios.min.js',
+    'https://cdn.staticfile.org/js-cookie/3.0.1/js.cookie.min.js',
+    'https://cdn.staticfile.org/vue/2.6.14/vue.min.js',
+    'https://cdn.staticfile.org/vue-router/4.1.5/vue-router.min.js',
+    'https://cdn.staticfile.org/vuex/4.0.2/vuex.min.js'
+  ]
+}
+
+module.exports = {
+  publicPath: '/', // 部署应用包时的基本 URL
+  outputDir: 'dist', // 当运行 vue-cli-service build 时生成的生产环境构建文件的目录
+  assetsDir: 'static', // 放置生成的静态资源 (js、css、img、fonts) 的 (相对于 outputDir 的) 目录
+  lintOnSave: process.env.NODE_ENV === 'development', // 是否在开发环境下通过 eslint-loader 在每次保存时 lint 代码。这个值会在 @vue/cli-plugin-eslint 被安装之后生效
+  runtimeCompiler: true, // 是否使用包含运行时编译器的 Vue 构建版本。设置为 true 后你就可以在 Vue 组件中使用 template 选项了，但是这会让你的应用额外增加 10kb 左右。
+  transpileDependencies: [], // 默认情况下 babel-loader 会忽略所有 node_modules 中的文件。你可以启用本选项，以避免构建后的代码中出现未转译的第三方依赖
+  productionSourceMap: false, // 如果你不需要生产环境的 source map，可以将其设置为 false 以加速生产环境构建
+  // https://webpack.docschina.org/concepts/
+  // 如果这个值是一个对象，则会通过 webpack-merge 合并到最终的配置中。如果这个值是一个函数，则会接收被解析的配置作为参数。该函数既可以修改配置并不返回任何东西，也可以返回一个被克隆或合并过的配置版本
+  configureWebpack: {
+    // 这些选项决定了如何处理项目中的不同类型的模块
+    module: {
+      // 创建模块时，匹配请求的规则数组。这些规则能够修改模块的创建方式。 这些规则能够对模块(module)应用 loader，或者修改解析器(parser)
+      rules: [
+        {
+          test: /\.css$/i,
+          use: [MiniCssExtractPlugin.loader, 'css-loader']
+        }
+      ]
+    },
+
+    // 配置模块如何解析
+    resolve: {
+      // 创建 import 或 require 的别名，来确保模块引入变得更简单
+      alias: {
+        '@': resolve('src') // @ 代表 src 路径
+      },
+      extensions: ['.js', '.vue'] // 尝试按顺序解析这些后缀名
+    },
+
+    // 优化
+    optimization: {
+      minimize: true,
+      minimizer: [
+        // https://github.com/webpack-contrib/terser-webpack-plugin
+        // https://github.com/terser/terser
+        // https://webpack.docschina.org/plugins/terser-webpack-plugin/
+        // 该插件使用 terser 来压缩 JavaScript
+        new TerserPlugin({
+          parallel: 4, // 使用多进程并发运行以提高构建速度
+          terserOptions: {
+            compress: {
+              drop_console: true, // 删除 console
+              drop_debugger: true // debugger
+            }
+          }
+        }),
+
+        // https://github.com/webpack-contrib/css-minimizer-webpack-plugin
+        // https://webpack.docschina.org/plugins/css-minimizer-webpack-plugin/
+        // 这个插件使用 cssnano 优化和压缩 CSS
+        // 插件 css-minimizer-webpack-plugin 进行 css 压缩
+        new CssMinimizerPlugin({
+          test: new RegExp('\\.(' + ['sass', 'scss', 'css'].join('|') + ')$'), // 包括所有通过测试断言的资产 处理所有匹配此 {RegExp} 的资源
+          parallel: 4 // 启用多进程并发执行且设置并发数
+        })
+
+      ],
+
+      // https://webpack.docschina.org/plugins/split-chunks-plugin/
+      // SplitChunksPlugin 插件开箱即用，可以将公共的依赖模块提取到已有的入口 chunk 中，或者提取到一个新生成的 chunk
+      splitChunks: {
+        chunks: 'all', // 这表明将选择哪些 chunk 进行优化;当提供一个字符串，有效值为 all，async 和 initial。设置为 all 可能特别强大，因为这意味着 chunk 可以在异步和非异步 chunk 之间共享
+        minSize: 20000, // 生成 chunk 的最小体积（以 bytes 为单位）
+        minRemainingSize: 0, // 通过确保拆分后剩余的最小 chunk 体积超过限制来避免大小为零的模块
+        minChunks: 1, // 拆分前必须共享模块的最小 chunks 数
+        maxAsyncRequests: 30, // 按需加载时的最大并行请求数
+        maxInitialRequests: 30, // 入口点的最大并行请求数
+        enforceSizeThreshold: 50000, // 强制执行拆分的体积阈值和其他限制（minRemainingSize，maxAsyncRequests，maxInitialRequests）将被忽略
+        // 缓存组可以继承和/或覆盖来自 splitChunks.* 的任何选项。但是 test、priority 和 reuseExistingChunk 只能在缓存组级别上进行配置。将它们设置为 false以禁用任何默认缓存组
+        cacheGroups: {
+          defaultVendors: {
+            test: /[\\/]node_modules[\\/]/, // 控制此缓存组选择的模块。省略它会选择所有模块。它可以匹配绝对模块资源路径或 chunk 名称
+            priority: -10, // 一个模块可以属于多个缓存组。优化将优先考虑具有更高 priority（优先级）的缓存组
+            reuseExistingChunk: true // 如果当前 chunk 包含已从主 bundle 中拆分出的模块，则它将被重用，而不是生成新的模块
+          },
+          default: {
+            minChunks: 2,
+            priority: -20,
+            reuseExistingChunk: true
+          }
+        }
+      }
+    },
+
+    // plugins 选项用于以各种方式自定义 webpack 构建过程
+    plugins: [
+      // https://github.com/clessg/progress-bar-webpack-plugin
+      // 插件 progress-bar-webpack-plugin 进行 webpack 查看编译进度
+      // 用粉笔撒上几种颜色 要包括已用的时间并防止在生成完成时清除进度条
+      new ProgressBarPlugin({
+        format: '  build [:bar] ' + chalk.green.bold(':percent') + ' (:elapsed seconds)', // 进度条的格式
+        clear: false // 选项，用于在完成时清除默认为 true 的栏
+      }),
+
+      // https://github.com/stephencookdev/speed-measure-webpack-plugin
+      // 优化webpack构建速度的第一步是知道将注意力集中在什么地方
+      // 插件 speed-measure-webpack-plugin 进行 webpack 编译速度显示
+      new SpeedMeasurePlugin(),
+
+      // https://github.com/jantimon/html-webpack-plugin
+      // https://webpack.docschina.org/plugins/html-webpack-plugin/
+      // HtmlWebpackPlugin 简化了 HTML 文件的创建，以便为你的 webpack 包提供服务
+      new HtmlWebpackPlugin({
+        cdn: isProd ? assetsCDN : {}
+      }),
+
+      // https://github.com/webpack-contrib/mini-css-extract-plugin
+      // https://webpack.docschina.org/plugins/mini-css-extract-plugin/
+      // 本插件会将 CSS 提取到单独的文件中，为每个包含 CSS 的 JS 文件创建一个 CSS 文件，并且支持 CSS 和 SourceMaps 的按需加载
+      // 插件 mini-css-extract-plugin 进行 css 分离
+      new MiniCssExtractPlugin(),
+
+      // https://github.com/webpack-contrib/compression-webpack-plugin
+      // https://webpack.docschina.org/plugins/compression-webpack-plugin/
+      // 插件 compression-webpack-plugin 进行 GZIP 压缩
+      new CompressionPlugin({
+        test: new RegExp('\\.(' + ['js', 'css'].join('|') + ')$'), // 包括所有通过测试断言的资产 处理所有匹配此 {RegExp} 的资源
+        algorithm: 'gzip', // 压缩算法/函数 可以是 (buffer, cb) => cb(buffer) 或者是使用 zlib 里面的算法的 {String}
+        threshold: 10240, // 仅处理大于此大小的资产。以字节为单位
+        minRatio: 0.8, // 仅处理压缩性能优于此比率的资源
+        filename: '[path][name].gz[query]' // 目标资源名称。[file] 会被替换成原资源。[path] 会被替换成原资源路径，[query] 替换成原查询字符串
+      })
+    ],
+
+    // 缓存生成的 webpack 模块和 chunk，来改善构建速度
+    cache: {
+      type: 'filesystem' // 使用文件缓存
+    },
+
+    externals: isProd ? assetsCDN.externals : {} // 防止将某些 import 的包(package)打包到 bundle 中，而是在运行时(runtime)再去从外部获取这些扩展依赖(external dependencies)
+
+  },
+  // css 相关
+  css: {
+    // 向预处理器 Loader 传递选项
+    loaderOptions: {
+    }
+  },
+  devServer: {
+    client: {
+      // 当出现编译错误或警告时，在浏览器中显示全屏覆盖
+      overlay: {
+        errors: true,
+        warnings: false
+      }
+    },
+    https: true, // 默认情况下，开发服务器将通过 HTTP 提供服务。可以选择使用 HTTPS 提供服务
+    // 为所有响应添加 headers
+    headers: {
+      'Access-Control-Allow-Origin': '*' // 处理跨域
+    },
+    host: '0.0.0.0', // 指定要使用的 host 让你的服务器可以被外部访问
+    open: true, // 告诉 dev-server 在服务器已经启动后打开浏览器。设置其为 true 以打开你的默认浏览器
+    port: 8000, // 指定监听请求的端口号
+    // 如果你的前端应用和后端 API 服务器没有运行在同一个主机上，你需要在开发环境下将 API 请求代理到 API 服务器
+    proxy: {
+      '/api': {
+        target: 'https://api.go-admin.dev', // 代理地址
+        changeOrigin: true, // 默认情况下，代理时会保留主机头的来源，可以将 changeOrigin 设置为 true 以覆盖此行为
+        ws: false, // websocket支持
+        secure: false, // 默认情况下，将不接受在 HTTPS 上运行且证书无效的后端服务器。 如果需要可以将 secure 设置为 false
+        // 重写目标的网址路径。对象键将用作正则表达式以匹配路径
+        pathRewrite: {
+          '^/api': '/api'
+        }
+      }
+    }
+  },
+  parallel: require('os').cpus().length > 1, // 是否为 Babel 或 TypeScript 使用 thread-loader。该选项在系统的 CPU 有多于一个内核时自动启用，仅作用于生产构建
+  pwa: {} // 向 PWA 插件传递选项
+}

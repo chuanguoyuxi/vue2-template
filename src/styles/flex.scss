@@ -1,0 +1,69 @@
+.yu-flex {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+.yu-flex-wrap {
+  flex-wrap: wrap;
+}
+
+.yu-flex-nowrap {
+  flex-wrap: nowrap;
+}
+
+.yu-col-center {
+  align-items: center;
+}
+
+.yu-col-top {
+  align-items: flex-start;
+}
+
+.yu-col-bottom {
+  align-items: flex-end;
+}
+
+.yu-row-center {
+  justify-content: center;
+}
+
+.yu-row-left {
+  justify-content: flex-start;
+}
+
+.yu-row-right {
+  justify-content: flex-end;
+}
+
+.yu-row-between {
+  justify-content: space-between;
+}
+
+.yu-row-around {
+  justify-content: space-around;
+}
+
+.yu-text-left {
+  text-align: left;
+}
+
+.yu-text-center {
+  text-align: center;
+}
+
+.yu-text-right {
+  text-align: right;
+}
+
+.yu-flex-col {
+  display: flex;
+  flex-direction: column;
+}
+
+// 定义flex等分
+@for $i from 0 through 12 {
+  .yu-flex__#{$i} {
+    flex: $i;
+  }
+}

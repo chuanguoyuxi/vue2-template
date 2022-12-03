@@ -1,0 +1,34 @@
+.yu-font-weight__bold {
+  font-weight: bold !important;
+}
+
+.yu-font-weight__bolder {
+  font-weight: bolder !important;
+}
+
+.yu-font-size__xs {
+  font-size: 22px !important;
+}
+
+.yu-font-size__sm {
+  font-size: 26px !important;
+}
+
+.yu-font-size__md {
+  font-size: 28px !important;
+}
+
+.yu-font-size__lg {
+  font-size: 30px !important;
+}
+
+.yu-font-size__xl {
+  font-size: 34px !important;
+}
+
+// 定义字体(px)单位，最大80 最小8
+@for $i from 8 to 80 {
+  .yu-font-size__#{$i} {
+    font-size: $i + px !important;
+  }
+}

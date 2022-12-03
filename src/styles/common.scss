@@ -1,0 +1,187 @@
+// 全局变量
+@import "./variables.scss";
+
+// color
+@import "./color.scss";
+// font
+@import "./font.scss";
+// flex
+@import "./flex.scss";
+
+a {
+  text-decoration: none;
+  color: #333;
+}
+* {
+  outline: none;
+}
+
+.yu-line-clamp__1 {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.yu-line-clamp__2 {
+  -webkit-line-clamp: 2;
+}
+
+.yu-line-clamp__3 {
+  -webkit-line-clamp: 3;
+}
+
+.yu-line-clamp__4 {
+  -webkit-line-clamp: 4;
+}
+
+.yu-line-clamp__5 {
+  -webkit-line-clamp: 5;
+}
+
+.yu-line-clamp__2,
+.yu-line-clamp__3,
+.yu-line-clamp__4,
+.yu-line-clamp__5 {
+  overflow: hidden;
+  word-break: break-all;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+}
+
+.yu-overflow__hidden {
+  overflow: hidden;
+}
+
+.yu-html {
+  word-break: break-all; 
+  word-wrap: break-word;
+  width: 100%;
+  overflow: hidden;
+  line-height: initial;
+  p {
+    width: 100%;
+    img {
+      width: 100%;
+    }
+  }
+}
+
+.yu-link {
+  margin: auto 0;
+  height: 6px;
+  width: 6px;
+  border-width: 1px 1px 0 0;
+  border-color: #969799;
+  border-style: solid;
+  transform: matrix(0.71, 0.71, -0.71, 0.71, 0, 0);
+}
+
+// 1px 边距
+.yu-border,
+.yu-border__bottom,
+.yu-border__left,
+.yu-border__right,
+.yu-border__top,
+.yu-border__top-bottom {
+  position: relative;
+  &::after {
+    content: " ";
+    position: absolute;
+    left: 0;
+    top: 0;
+    pointer-events: none;
+    box-sizing: border-box;
+    -webkit-transform-origin: 0 0;
+    transform-origin: 0 0;
+    // 多加0.1%，能解决有时候边框缺失的问题
+    width: 199.8%;
+    height: 199.7%;
+    transform: scale(0.5, 0.5);
+    border: 0 solid $yu-color__border;
+    z-index: 1;
+  }
+}
+
+.yu-border__top {
+  &::after {
+    border-top-width: 1px;
+  }
+}
+
+.yu-border__left {
+  &::after {
+    border-left-width: 1px;
+  }
+}
+
+.yu-border__right:after {
+  border-right-width: 1px;
+}
+
+.yu-border__bottom {
+  &::after {
+    border-bottom-width: 1px;
+  }
+}
+
+.yu-border__top-bottom:after {
+  border-width: 1px 0;
+}
+
+.yu-border:after {
+  border-width: 1px;
+}
+
+// 定义圆角，历遍1-10
+@for $i from 0 through 10 {
+  // 只要双数
+  @if $i % 2 == 0 {
+    // 得出：yu-border-radius__2
+    .yu-border-radius__#{$i} {
+      border-radius: $i + px !important;
+    }
+  }
+}
+
+// 定义内外边距，历遍1-80
+@for $i from 0 through 80 {
+  // 只要双数和能被5除尽的数
+  @if $i % 2 == 0 or $i % 5 == 0 {
+    // 得出：yu-margin__30或者yu-m__30
+    .yu-margin__#{$i},
+    .yu-m__#{$i} {
+      margin: $i + px !important;
+    }
+
+    // 得出：yu-padding__30或者yu-p__30
+    .yu-padding__#{$i},
+    .yu-p__#{$i} {
+      padding: $i + px !important;
+    }
+
+    @each $short, $long in l left, t top, r right, b bottom {
+      // 缩写版，结果如： yu-m-l__30
+      // 定义外边距
+      .yu-m-#{$short}__#{$i} {
+        margin-#{$long}: $i + px !important;
+      }
+
+      // 定义内边距
+      .yu-p-#{$short}__#{$i} {
+        padding-#{$long}: $i + px !important;
+      }
+
+      // 完整版，结果如：yu-margin-left__30
+      // 定义外边距
+      .yu-margin-#{$long}__#{$i} {
+        margin-#{$long}: $i + px !important;
+      }
+
+      // 定义内边距
+      .yu-padding-#{$long}__#{$i} {
+        padding-#{$long}: $i + px !important;
+      }
+    }
+  }
+}
